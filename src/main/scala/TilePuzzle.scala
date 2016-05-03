@@ -1,67 +1,70 @@
 import scala.Vector
 
-case class Position(row: Int, column: Int)
+case class Position(row: Int, column: Int) {
+  override def toString = s"($row, $column)"
+}
 
-class Grid private (grid: Vector[Vector[Boolean]], endPos: Position, occupied: Int) {
-  def this(rows: Int, cols: Int, endPos: Position) = this(Grid.empty(rows, cols), endPos, 0)
-  
-  private val rows = grid.length
-  private val cols = grid(0).length
-  val solved: Boolean = occupied == rows * cols
+class Grid private (grid: Vector[Boolean], rows: Int) {
+  def this(rows: Int, cols: Int) = this(Grid.empty(rows, cols), rows)
+
+  private val cols = grid.size / rows
+
+  val solved: Boolean = grid.forall(occupied => occupied)
 
   def occupy(pos: Position): Grid = {
-    val updatedRow = grid(pos.row).updated(pos.column, true)
-    new Grid(grid.updated(pos.row, updatedRow), endPos, occupied + 1)
+    new Grid(grid.updated(pos.row * cols + pos.column, true), rows)
   }
 
-  def nextPositions(currentPos: Position): List[Position] = {
-    def unavailable(nextPos: Position) = {
-      nextPos.row < 0 || nextPos.row >= rows || nextPos.column < 0 || nextPos.column >= cols ||
-         (nextPos == endPos && occupied < (rows * cols - 1)) || grid(nextPos.row)(nextPos.column)
-    }
+  def nextPositions(currentPos: Position): Iterable[Position] = {
+    def unavailable(nextRow: Int, nextCol: Int) =
+      nextRow < 0 || nextRow >= rows || nextCol < 0 || nextCol >= cols || grid(nextRow * cols + nextCol)
 
-    List((-1, 0), (0, 1), (1, 0), (0, -1)) flatMap {
-      case (dy, dx) => {
-        val nextPos = Position(currentPos.row + dy, currentPos.column + dx)
-
-        if (unavailable(nextPos)) None
-        else Some(nextPos)
-      }
-    }
+    for {
+      (dy, dx) <- Grid.neighbors
+      nextRow = currentPos.row + dy
+      nextCol = currentPos.column + dx
+      available = !unavailable(nextRow, nextCol)
+      if available
+    } yield Position(nextRow, nextCol)
   }
-  
-  override def toString = grid.zipWithIndex map {
-    case (row, j) => row.zipWithIndex map {
-      case (occupied, i) => {
-        if (j == endPos.row && i == endPos.column) 'X'
-        else if (occupied) '#'
-        else '.'
-      }
-    } mkString
-  } mkString ("\n")
+
+  override def toString = {
+    def asString(row: Vector[Boolean]) = row.map(occupied => if (occupied) 'x' else '.').mkString
+
+    val rows = this.grid.grouped(cols)
+    rows.map(asString).mkString("\n")
+  }
 }
 
 object Grid {
-  private def empty(rows: Int, cols: Int): Vector[Vector[Boolean]] = {
-    def emptyRow: Vector[Boolean] = Vector(((0 until cols) map { col => false }):_*)
-    Vector(((0 until rows) map { row => emptyRow }):_*)
-  }
+  private def empty(rows: Int, cols: Int) = Vector.fill(rows * cols)(false)
+  private val neighbors: Iterable[(Int, Int)] = List((-1, 0), (0, 1), (1, 0), (0, -1))
 }
 
 object TilePuzzle extends App {
-  def count(grid: Grid, currentPos: Position): Int = {
-    if (grid.solved) 1
-    else grid.nextPositions(currentPos).par.foldLeft(0)((sum, nextPos) => sum + count(grid occupy nextPos, nextPos))
+  def count(grid: Grid, startPos: Position): Int = {
+    def count0(grid: Grid, currentPos: Position): Int = {
+      if (grid.solved) 1
+      else grid.nextPositions(currentPos).foldLeft(0)((sum, nextPos) => sum + count0(grid occupy nextPos, nextPos))
+    }
+
+    count0(grid occupy startPos, startPos)
   }
-  
-  val startPos = Position(1, 0)
-  val endPos = Position(0, 2)
-  val occupieds = List()
-  
-  val grid = occupieds.foldLeft(new Grid(2, 3, endPos))((grid, pos) => {
+
+  // http://faqsmedia.ign.com/faqs/image/zelda_oracle_of_ages_tile_3.gif
+  val startPos = Position(6, 1)
+  val occupieds: Iterable[Position] = List(
+      Position(0, 2),
+      Position(1, 2), Position(1, 7),
+      Position(3, 1), Position(3, 4), Position(3, 8),
+      Position(4, 3),
+      Position(5, 7),
+      Position(6, 2))
+
+  val grid = occupieds.foldLeft(new Grid(7, 9))((grid, pos) => {
     grid occupy pos
   })
 
   println(grid)
-  println(count(grid occupy startPos, startPos))
+  println(count(grid, startPos))
 }
