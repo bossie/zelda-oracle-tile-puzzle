@@ -1,6 +1,6 @@
 package org.bossie.zotp
 
-import grid.{Grid, Position}
+import grid.{Grid, Position, GridConfiguration}
 
 object TilePuzzle extends App {
   def count(grid: Grid, startPos: Position): Int = {
@@ -62,20 +62,20 @@ object TilePuzzle extends App {
   }
 
   // http://faqsmedia.ign.com/faqs/image/zelda_oracle_of_ages_tile_3.gif
-  val startPos = Position(6, 1)
-  val occupieds: Iterable[Position] = List(
-      Position(0, 2),
-      Position(1, 2), Position(1, 7),
-      Position(3, 1), Position(3, 4), Position(3, 8),
-      Position(4, 3),
-      Position(5, 7),
-      Position(6, 2))
+  val config = GridConfiguration.fromString(
+    """..#......
+      |..#....#.
+      |.........
+      |.#..#...#
+      |...#.....
+      |.......#.
+      |.s#......""".stripMargin)
 
-  val grid = occupieds.foldLeft(new Grid(7, 9))((grid, pos) => {
-    grid occupy pos
-  })
+  val emptyGrid = new Grid(config.rows, config.columns)
+  val occupieds = config.occupieds
+  val startPos = config.start
 
-  println(grid)
+  val grid = occupieds.foldLeft(emptyGrid)((grid, pos) => grid occupy pos)
 
   println(new java.util.Date)
 
