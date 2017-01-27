@@ -2,5 +2,7 @@
 .classpath
 .settings
 .cache
-bin
-
+bin/
+.idea/
+out/
+target/
