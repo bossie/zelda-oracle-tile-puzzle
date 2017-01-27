@@ -45,7 +45,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>TilePuzzle</mainClass>
+                            <mainClass>org.bossie.zotp.TilePuzzle</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

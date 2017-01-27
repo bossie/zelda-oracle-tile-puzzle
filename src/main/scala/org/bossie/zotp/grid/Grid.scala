@@ -1,3 +1,5 @@
+package org.bossie.zotp.grid
+
 case class Position(row: Int, column: Int) {
   override def toString = s"($row, $column)"
 }

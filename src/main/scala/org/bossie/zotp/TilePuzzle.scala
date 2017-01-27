@@ -1,3 +1,7 @@
+package org.bossie.zotp
+
+import grid.{Grid, Position}
+
 object TilePuzzle extends App {
   def count(grid: Grid, startPos: Position): Int = {
     def count0(grid: Grid, currentPos: Position): Int = {
